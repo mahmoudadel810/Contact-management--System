@@ -11,10 +11,9 @@ export const hardcodedUsers = async (req, res, next) =>
 {
    try {
       const users = [
-         { userName: 'user1', password: 'User@1', role: 'user' },
-         { userName: 'user2', password: 'User@2', role: 'user' }
+         { userName: 'user1', password: 'user1', role: 'admin' },  
+         { userName: 'user2', password: 'user2', role: 'user' }   
       ];
-
 
       for (let user of users)
       {
@@ -22,11 +21,14 @@ export const hardcodedUsers = async (req, res, next) =>
          user.password = hashedPassword; 
       }
    
-
       await userModel.insertMany(users);
       res.status(201).json({
          success: true,
-         message: "Users seeded successfully"
+         message: "Users Added successfully",
+         data: {
+            admin: "user1/user1",
+            user: "user2/user2"
+         }
       });
    }
    catch (error)
