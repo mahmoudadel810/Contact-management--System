@@ -1,0 +1,135 @@
+<div class="add-contact-container">
+  <!-- Modern Header with Gradient Background -->
+  <mat-toolbar class="header-toolbar">
+    <mat-toolbar-row>
+      <h1>Add New Contact</h1>
+      <span class="spacer"></span>
+      <button mat-raised-button class="back-button" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Contacts
+      </button>
+    </mat-toolbar-row>
+  </mat-toolbar>
+
+  <!-- Enhanced Form Container -->
+  <div class="form-container">
+    <mat-card class="contact-form-card">
+      <!-- Loading Overlay -->
+      <div *ngIf="isSubmitting" class="loading-overlay">
+        <mat-spinner diameter="60"></mat-spinner>
+        <div class="loading-text">Creating your contact...</div>
+      </div>
+
+      <!-- Form Header -->
+      <div class="form-header">
+        <h2>Contact Information</h2>
+        <p>Fill in the details below to add a new contact to your list</p>
+      </div>
+
+      <!-- Contact Form -->
+      <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" class="contact-form" novalidate>
+        
+        <!-- Name Field -->
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Full Name</mat-label>
+          <input matInput 
+                 formControlName="name" 
+                 placeholder="Enter contact's full name"
+                 autocomplete="name">
+          <mat-icon matSuffix>person</mat-icon>
+          <mat-error *ngIf="contactForm.get('name')?.hasError('required')">
+            Name is required
+          </mat-error>
+          <mat-error *ngIf="contactForm.get('name')?.hasError('minlength')">
+            Name must be at least 2 characters
+          </mat-error>
+          <mat-error *ngIf="contactForm.get('name')?.hasError('maxlength')">
+            Name cannot exceed 10 characters
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Phone Field -->
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Phone Number</mat-label>
+          <input matInput 
+                 formControlName="phone" 
+                 placeholder="01234567890"
+                 autocomplete="tel"
+                 maxlength="11">
+          <mat-icon matSuffix>phone</mat-icon>
+          <mat-hint>Enter 11 digits without spaces</mat-hint>
+          <mat-error *ngIf="contactForm.get('phone')?.hasError('required')">
+            Phone number is required
+          </mat-error>
+          <mat-error *ngIf="contactForm.get('phone')?.hasError('pattern')">
+            Phone must be exactly 11 digits
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Address Field -->
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Address</mat-label>
+          <input matInput 
+                 formControlName="address" 
+                 placeholder="Enter contact's address"
+                 autocomplete="street-address">
+          <mat-icon matSuffix>location_on</mat-icon>
+          <mat-error *ngIf="contactForm.get('address')?.hasError('required')">
+            Address is required
+          </mat-error>
+          <mat-error *ngIf="contactForm.get('address')?.hasError('minlength')">
+            Address must be at least 5 characters
+          </mat-error>
+          <mat-error *ngIf="contactForm.get('address')?.hasError('maxlength')">
+            Address cannot exceed 50 characters
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Notes Field -->
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Notes (Optional)</mat-label>
+          <textarea matInput 
+                    formControlName="notes" 
+                    placeholder="Add any additional notes about this contact"
+                    rows="3"
+                    maxlength="200"></textarea>
+          <mat-icon matSuffix>notes</mat-icon>
+          <mat-hint>Maximum 200 characters</mat-hint>
+          <mat-error *ngIf="contactForm.get('notes')?.hasError('maxlength')">
+            Notes cannot exceed 200 characters
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Error/Success Messages -->
+        <div *ngIf="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
+
+        <div *ngIf="successMessage" class="success-message">
+          {{ successMessage }}
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="button" 
+                  mat-stroked-button 
+                  class="cancel-button"
+                  (click)="goBack()"
+                  [disabled]="isSubmitting">
+            <mat-icon>cancel</mat-icon>
+            Cancel
+          </button>
+          
+          <button type="submit" 
+                  mat-raised-button 
+                  class="submit-button"
+                  [disabled]="contactForm.invalid || isSubmitting">
+            <mat-spinner *ngIf="isSubmitting" diameter="20"></mat-spinner>
+            <mat-icon *ngIf="!isSubmitting">save</mat-icon>
+            {{ isSubmitting ? 'Creating...' : 'Create Contact' }}
+          </button>
+        </div>
+      </form>
+    </mat-card>
+  </div>
+</div>
