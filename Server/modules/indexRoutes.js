@@ -1,5 +1,5 @@
 import userRoutes from "./User/userRoutes.js";
-// import contactRoutes from "./contactRoutes.js";
+import contactRoutes from "./Contact/contactRoutes.js";
 
 
 
@@ -19,4 +19,4 @@ import userRoutes from "./User/userRoutes.js";
 
 
 
-export { userRoutes }; 
+export { userRoutes, contactRoutes }; 
