@@ -7,7 +7,7 @@ import contactModel from "../DB/models/contactModel.js";
 
 export const protect = async (req, res, next) => {
    try {
-      const token = req.headers.authorization?.split(' ')[1]; // Bearer prefix f el env
+      const token = req.headers.authorization?.split(process.env.TOKEN_PREFIX)[1]; // Bearer prefix f el env
 
       if (!token) {
          return res.status(401).json({
