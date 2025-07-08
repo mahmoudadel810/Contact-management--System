@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 export const tokenFunction = ({
    payload = {} || '',
    signature = process.env.SIGNATURE,
-   expiresIn = '1h',
    generate = true
 }) =>
 {
@@ -18,7 +17,7 @@ export const tokenFunction = ({
          //NOTE - Generate the Token
          if (generate && typeof payload == "object")
          {
-            const token = jwt.sign(payload, signature, { expiresIn });
+            const token = jwt.sign(payload, signature);
             return token;
          }
       }
