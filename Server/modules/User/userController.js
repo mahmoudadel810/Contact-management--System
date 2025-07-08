@@ -11,8 +11,8 @@ export const hardcodedUsers = async (req, res, next) =>
 {
    try {
       const users = [
-         { userName: 'user1', password: 'user1', role: 'user' },
-         { userName: 'user2', password: 'user2', role: 'user' }
+         { userName: 'user1', password: 'User@1', role: 'user' },
+         { userName: 'user2', password: 'User@2', role: 'user' }
       ];
 
 
@@ -40,36 +40,31 @@ export const hardcodedUsers = async (req, res, next) =>
 
 //==================================Login======================================
 
-export const login = async (req, res, next) =>
-{
-      const { userName, password } = req.body;
+export const login = async (req, res, next) => {
+   const { userName, password } = req.body;
 
-   if (!userName || !password)
-   {
+   if (!userName || !password) {
       return res.status(400).json({ success: false, message: "Please provide username and password" });
-   };
-   try
-   {
+   }
+   try {
       const user = await userModel.findOne({ userName }).select('+password');
 
-      // Check if user exists
       if (!user) {
-         return res.status(401).json({ success: false, message: "Invalid Informmmations" });
+         return res.status(401).json({ success: false, message: "Invalid Informations" });
       }
-      // Check if password matches
-      if (!compareFunction({ payload: password, referenceData: user.password })) {
+      const isMatch = compareFunction({ payload: password, referenceData: user.password });
+      if (!isMatch) {
          return res.status(401).json({ success: false, message: "Invalid Informations" });
       }
 
       const token = tokenFunction({ payload: { id: user._id, role: user.role }, expiresIn: process.env.JWT_EXPIRES_IN });
 
-      res.status(200).json({
+      return res.status(200).json({
          success: true,
          message: "Login successful",
          token
       });
-   } catch (error)
-   {
+   } catch (error) {
       errorHandler(error, req, res, next);
    }
 }
