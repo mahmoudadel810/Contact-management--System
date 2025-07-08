@@ -1,14 +1,21 @@
-import jwt from "jsonwebtoken";
-import userModel from "../models/userModel.js";
-import contactModel from "../models/contactModel.js";
 
 
-export const errorHandler = (err, req, res, next) => {
-    const statusCode = res.statusCode ? res.statusCode : 500;
-    res.status(statusCode);
-    res.json({
-        message: err.message,
-        stack: process.env.NODE_ENV === "production" ? null : err.stack,
+const errorHandler = (err, req, res, next) =>
+{
+    const statusCode = err.statusCode || 500;
+    const message = err.message || 'Internal Server Error';
+    
+    res.status(statusCode).json({
+        success: false,
+        error: message,
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
 };
 
+const notFound = (req, res, next) => {
+    const error = new Error(`Not Found - ${req.originalUrl}`);
+    error.statusCode = 404;
+    next(error);
+};
+
+export { errorHandler, notFound };
