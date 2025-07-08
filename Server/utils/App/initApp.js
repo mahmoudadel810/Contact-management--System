@@ -4,9 +4,11 @@ import helmet from "helmet";
 import compression from "compression";
 import dotenv from "dotenv";
 import path from "path";
+import { createServer } from "http";
 import { errorHandler, notFound } from "../erorrHandler.js";
 import connectDB from "../../DB/connection.js";
 import * as AllRoutes from "../../modules/indexRoutes.js";
+import { initializeSocket } from "../../service/socket.js";
 
 export const initApp = () => {
   
@@ -27,7 +29,13 @@ export const initApp = () => {
 
    // Main Routes 
    app.use(`/api/v1/users`, AllRoutes.userRoutes);
-   // app.use(`/api/v1/contacts`, AllRoutes.contactRoutes);
+   app.use(`/api/v1/contacts`, AllRoutes.contactRoutes);
+
+   //  HTTP server for Socket.io 
+   const server = createServer(app); //ill return
+
+   // Initialize Socket 
+   const io = initializeSocket(server); //dont forget to return
 
    // check server
    app.get('/', (req, res) => {
@@ -43,11 +51,15 @@ export const initApp = () => {
    app.get('/api/v1/health', (req, res) => {
       res.status(200).json({
          success: true,
-         message: 'Contacts API is running!',
+         message: 'Server is running and healthy!',
          timestamp: new Date().toISOString(),
          port: PORT,
          database: process.env.MONGO_URI.split('/').pop(),
-         availableRoutes: [`/api/v1/users`, `/api/v1/contacts`]
+         availableRoutes: [`/api/v1/users`, `/api/v1/contacts`],
+         socket: {
+            connectedUsers: io.engine.clientsCount || 0,
+            totalRooms: Object.keys(io.sockets.adapter.rooms).length
+         }
       });
    });
 
@@ -55,11 +67,13 @@ export const initApp = () => {
    app.use(notFound);
    app.use(errorHandler);
 
-   // Start 
-   app.listen(PORT, () => {
+   // Start server with Socket
+   server.listen(PORT, () => {
       console.log(`Server is running on Port ${PORT} -----====!!!!`);
+      console.log(`Socket.io is running and Ready , connected users now:  ${io.engine.clientsCount}`);
+      
    });
 
-   return app;
+   return { app, server, io };
 };
 
