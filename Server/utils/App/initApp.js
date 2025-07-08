@@ -18,7 +18,6 @@ export const initApp = () => {
    // Create Express app
    const app = express();
    const PORT = process.env.PORT || 3000;
-   const Base_Url = process.env.BASE_URL || 'http://localhost:3000';
 
    // 
    app.use(helmet());
@@ -26,17 +25,29 @@ export const initApp = () => {
    app.use(express.json());
    app.use(compression({ level: 6 })); // 9=high,slow 0=low,fast 4-6=good
 
-   // Main Routes
-   // app.use(`/${Base_Url}/api/v1/users`, AllRoutes.userRoutes);
-   // app.use(`/${Base_Url}/api/v1/contacts`, AllRoutes.contactRoutes);
+   // Main Routes 
+   app.use(`/api/v1/users`, AllRoutes.userRoutes);
+   // app.use(`/api/v1/contacts`, AllRoutes.contactRoutes);
 
    // check server
+   app.get('/', (req, res) => {
+      res.status(200).json({
+         success: true,
+         message: 'contact API is running!',
+         timestamp: new Date().toISOString()
+      });
+   });
+ 
+
+   // Health Check
    app.get('/api/v1/health', (req, res) => {
       res.status(200).json({
          success: true,
-         message: 'Saknly API is running!',
+         message: 'Contacts API is running!',
          timestamp: new Date().toISOString(),
-         availableRoutes: [`/${Base_Url}/api/v1/users`, `/${Base_Url}/api/v1/contacts`]
+         port: PORT,
+         database: process.env.MONGO_URI.split('/').pop(),
+         availableRoutes: [`/api/v1/users`, `/api/v1/contacts`]
       });
    });
 
