@@ -161,7 +161,15 @@ export class ContactListComponent implements OnInit, OnDestroy {
   saveEdit(contact: Contact) {
     if (!contact._id) return;
 
-    this.contactService.updateContact(contact._id, contact).subscribe({
+    // Only send the editable fields to match backend validation schema
+    const updateData = { //same data as the contact schema 
+      name: contact.name,
+      phone: contact.phone,
+      address: contact.address,
+      notes: contact.notes
+    };
+
+    this.contactService.updateContact(contact._id, updateData).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           // Update the contact in the data source
