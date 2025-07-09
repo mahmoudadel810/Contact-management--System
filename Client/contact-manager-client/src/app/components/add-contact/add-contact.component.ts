@@ -2,13 +2,6 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatIconModule } from '@angular/material/icon';
 
 import { ContactService } from '../../services/contact.service';
 
@@ -17,14 +10,7 @@ import { ContactService } from '../../services/contact.service';
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatToolbarModule,
-    MatIconModule
+    ReactiveFormsModule
   ],
   templateUrl: './add-contact.component.html',
   styleUrl: './add-contact.component.css'
@@ -100,5 +86,10 @@ export class AddContactComponent {
       const control = this.contactForm.get(key);
       control?.markAsTouched();
     });
+  }
+
+  // Helper method to get form control
+  getControl(name: string) {
+    return this.contactForm.get(name);
   }
 }

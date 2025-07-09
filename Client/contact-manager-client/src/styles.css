@@ -1,3 +1,7 @@
+/* Import Bootstrap CSS */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
 /* You can add global styles to this file, and also import other style files */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -6,9 +10,7 @@
   --primary-color: #667eea;
   --primary-dark: #5a67d8;
   --secondary-color: #764ba2;
-  --accent-color: #f093fb;
   --success-color: #48bb78;
-  --warning-color: #ed8936;
   --error-color: #f56565;
   --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --background-light: #f8fafc;
@@ -56,108 +58,39 @@ html, body {
   background: var(--primary-dark);
 }
 
-/* Material Design Overrides */
-.mat-mdc-card {
-  border-radius: var(--border-radius) !important;
-  box-shadow: var(--shadow-lg) !important;
-  border: none !important;
-  transition: var(--transition) !important;
+/* Bootstrap Component Enhancements */
+.card {
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  border: none;
+  transition: var(--transition);
 }
 
-.mat-mdc-card:hover {
+.card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-.mat-mdc-button, .mat-mdc-raised-button {
-  border-radius: 8px !important;
-  font-weight: 500 !important;
-  text-transform: none !important;
-  padding: 8px 24px !important;
-  transition: var(--transition) !important;
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 8px 24px;
+  transition: var(--transition);
 }
 
-.mat-mdc-raised-button.mat-primary {
-  background: var(--background-gradient) !important;
-  color: white !important;
+.btn-primary {
+  background: var(--background-gradient);
+  border: none;
 }
 
-.mat-mdc-raised-button.mat-primary:hover {
+.btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-lg) !important;
-}
-
-.mat-mdc-form-field {
-  margin-bottom: 16px !important;
-}
-
-.mat-mdc-form-field .mat-mdc-form-field-outline {
-  border-radius: 8px !important;
-}
-
-.mat-mdc-table {
-  border-radius: var(--border-radius) !important;
-  overflow: hidden !important;
-  box-shadow: var(--shadow-md) !important;
-}
-
-.mat-mdc-header-cell {
-  background: var(--background-gradient) !important;
-  color: white !important;
-  font-weight: 600 !important;
-  border: none !important;
-}
-
-.mat-mdc-row:hover {
-  background-color: rgba(102, 126, 234, 0.05) !important;
-}
-
-.mat-toolbar {
-  background: var(--background-gradient) !important;
-  color: white !important;
-  box-shadow: var(--shadow-md) !important;
-}
-
-/* Custom Animation Classes */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.fade-in-up {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-.fade-in-scale {
-  animation: fadeInScale 0.4s ease-out;
+  box-shadow: var(--shadow-lg);
 }
 
 /* Modern Gradient Backgrounds */
 .gradient-bg {
   background: var(--background-gradient);
-}
-
-.glass-effect {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Loading Animation */
@@ -174,24 +107,7 @@ html, body {
   }
 }
 
-/* Status Indicators */
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 8px;
-}
 
-.status-online {
-  background-color: var(--success-color);
-  box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.3);
-}
-
-.status-busy {
-  background-color: var(--error-color);
-  box-shadow: 0 0 0 2px rgba(245, 101, 101, 0.3);
-}
 
 /* Responsive Typography */
 @media (max-width: 768px) {
