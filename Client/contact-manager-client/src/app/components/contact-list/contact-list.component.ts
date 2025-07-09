@@ -2,44 +2,29 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { ContactService } from '../../services/contact.service';
 import { SocketService } from '../../services/socket.service';
 import { Contact, ContactListParams } from '../../models/contact.model';
 import { Observable } from 'rxjs';
+
+interface ContactWithState extends Contact {
+  isEditing?: boolean;
+  isLocked?: boolean;
+}
 
 @Component({
   selector: 'app-contact-list',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
-    MatTableModule,
-    MatButtonModule,
-    MatIconModule,
-    MatToolbarModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule
+    FormsModule
   ],
   templateUrl: './contact-list.component.html',
   styleUrl: './contact-list.component.css'
 })
 export class ContactListComponent implements OnInit, OnDestroy {
   // Data Properties
-  dataSource = new MatTableDataSource<Contact>([]);
-  filteredContacts: Contact[] = [];
-  displayedColumns: string[] = ['name', 'phone', 'address', 'notes', 'actions'];
+  contacts: ContactWithState[] = [];
   
   // State Properties
   loading = false;
@@ -49,10 +34,11 @@ export class ContactListComponent implements OnInit, OnDestroy {
   totalContacts = 0;
   pageSize = 5;
   currentPage = 0;
+  totalPages = 0;
   
   // Editing Properties
-  editingContact: Contact | null = null;
-  originalContact: Contact | null = null;
+  editingContact: ContactWithState | null = null;
+  originalContact: ContactWithState | null = null;
   lockedContacts: Set<string> = new Set();
 
   constructor(
@@ -65,6 +51,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
     this.socketService.connect();
     this.loadContacts();
     this.setupSocketListeners();
+    this.setupContactDeletedListener();
   }
 
   ngOnDestroy() {
@@ -72,6 +59,9 @@ export class ContactListComponent implements OnInit, OnDestroy {
       this.socketService.unlockContact(this.editingContact._id!);
     }
     this.socketService.disconnect();
+    
+    // Clean up event listener
+    window.removeEventListener('contactDeleted', this.handleContactDeleted.bind(this));
   }
 
   // Data Loading Methods
@@ -96,9 +86,9 @@ export class ContactListComponent implements OnInit, OnDestroy {
             isLocked: this.lockedContacts.has(contact._id!)
           }));
           
-          this.dataSource.data = contacts;
-          this.filteredContacts = contacts;
+          this.contacts = contacts;
           this.totalContacts = response.totalCount || response.pagination?.totalContacts || contacts.length;
+          this.totalPages = Math.ceil(this.totalContacts / this.pageSize);
         }
         this.loading = false;
       },
@@ -125,15 +115,29 @@ export class ContactListComponent implements OnInit, OnDestroy {
     return name[0].toUpperCase();
   }
 
+  getEndContactNumber(): number {
+    return Math.min((this.currentPage + 1) * this.pageSize, this.totalContacts);
+  }
+
   // Pagination Methods
-  onPageChange(event: PageEvent) {
-    this.currentPage = event.pageIndex;
-    this.pageSize = event.pageSize;
+  onPageChange(page: number) {
+    this.currentPage = page;
     this.loadContacts();
   }
 
+  getPageNumbers(): number[] {
+    const pages = [];
+    const start = Math.max(0, this.currentPage - 2);
+    const end = Math.min(this.totalPages, start + 5);
+    
+    for (let i = start; i < end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
   // Editing Methods
-  startEditing(contact: Contact) {
+  startEditing(contact: ContactWithState) {
     if (this.lockedContacts.has(contact._id!)) {
       return;
     }
@@ -151,18 +155,17 @@ export class ContactListComponent implements OnInit, OnDestroy {
     this.originalContact = { ...contact };
     
     // Update contact state
-    const index = this.dataSource.data.findIndex(c => c._id === contact._id);
+    const index = this.contacts.findIndex(c => c._id === contact._id);
     if (index !== -1) {
-      this.dataSource.data[index].isEditing = true;
-      this.dataSource._updateChangeSubscription();
+      this.contacts[index].isEditing = true;
     }
   }
 
-  saveEdit(contact: Contact) {
+  saveEdit(contact: ContactWithState) {
     if (!contact._id) return;
 
     // Only send the editable fields to match backend validation schema
-    const updateData = { //same data as the contact schema 
+    const updateData = {
       name: contact.name,
       phone: contact.phone,
       address: contact.address,
@@ -173,36 +176,44 @@ export class ContactListComponent implements OnInit, OnDestroy {
       next: (response) => {
         if (response.success && response.data) {
           // Update the contact in the data source
-          const index = this.dataSource.data.findIndex(c => c._id === contact._id);
+          const index = this.contacts.findIndex(c => c._id === contact._id);
           if (index !== -1) {
             const updatedContact = Array.isArray(response.data) ? response.data[0] : response.data;
-            this.dataSource.data[index] = { ...updatedContact, isEditing: false, isLocked: false };
-            this.dataSource._updateChangeSubscription();
+            this.contacts[index] = { ...updatedContact, isEditing: false, isLocked: false };
           }
 
           // Unlock the contact
           this.socketService.unlockContact(contact._id!);
           this.editingContact = null;
           this.originalContact = null;
-          
-          console.log('Contact updated successfully');
         }
       },
       error: (error) => {
         console.error('Error updating contact:', error);
+        
+        // Handle specific error cases
+        if (error.status === 404) {
+          alert(' Contact Deleted!\n\nThis contact was deleted by another user while you were editing. Your changes could not be saved.');
+          // Remove the contact from local list and refresh
+          this.loadContacts();
+        } else if (error.status === 423) {
+          alert('Contact Locked!\n\nThis contact is currently being edited by another user.');
+        } else {
+          alert('Save Failed!\n\nThere was an error saving your changes. Please try again.');
+        }
+        
         this.cancelEdit(contact);
       }
     });
   }
 
-  cancelEdit(contact: Contact) {
+  cancelEdit(contact: ContactWithState) {
     if (!contact._id || !this.originalContact) return;
 
     // Restore original values
-    const index = this.dataSource.data.findIndex(c => c._id === contact._id);
+    const index = this.contacts.findIndex(c => c._id === contact._id);
     if (index !== -1) {
-      this.dataSource.data[index] = { ...this.originalContact, isEditing: false, isLocked: false };
-      this.dataSource._updateChangeSubscription();
+      this.contacts[index] = { ...this.originalContact, isEditing: false, isLocked: false };
     }
 
     // Unlock the contact
@@ -218,11 +229,20 @@ export class ContactListComponent implements OnInit, OnDestroy {
         next: (response) => {
           if (response.success) {
             this.loadContacts();
-            console.log('Contact deleted successfully');
           }
         },
         error: (error) => {
           console.error('Error deleting contact:', error);
+          
+          // Handle specific error cases
+          if (error.status === 423) {
+            alert('Cannot Delete!\n\nThis contact is currently being edited by another user. Please wait for the editing session to finish before deleting.');
+          } else if (error.status === 404) {
+            alert('Contact Not Found!\n\nThis contact may have already been deleted.');
+            this.loadContacts(); // Refresh the list
+          } else {
+            alert('Delete Failed!\n\nThere was an error deleting the contact. Please try again.');
+          }
         }
       });
     }
@@ -230,54 +250,54 @@ export class ContactListComponent implements OnInit, OnDestroy {
 
   // Socket Event Handlers
   private setupSocketListeners() {
-    // Listen to the existing lockedContacts observable
     this.socketService.lockedContacts$.subscribe((lockedContactIds: string[]) => {
       this.lockedContacts = new Set(lockedContactIds);
       
-      // Update the locked state of contacts in the table
-      this.dataSource.data.forEach((contact, index) => {
+      // Update the locked state of contacts
+      this.contacts.forEach((contact, index) => {
         const wasLocked = contact.isLocked;
         const isNowLocked = this.lockedContacts.has(contact._id!);
         
         if (wasLocked !== isNowLocked) {
-          this.dataSource.data[index].isLocked = isNowLocked;
+          this.contacts[index].isLocked = isNowLocked;
         }
       });
+    });
+  }
+
+  // Real-time Contact Deletion Handler
+  private setupContactDeletedListener() {
+    window.addEventListener('contactDeleted', this.handleContactDeleted.bind(this));
+  }
+
+  private handleContactDeleted(event: any) {
+    const { contactId, deletedBy } = event.detail;
+
+    // Check if user was editing this contact
+    if (this.editingContact && this.editingContact._id === contactId) {
+      alert(`Contact Deleted!\n\nThe contact you were editing was deleted by ${deletedBy.userName}. Your editing session has been cancelled.`);
       
-      if (this.dataSource.data.length > 0) {
-        this.dataSource._updateChangeSubscription();
-      }
-    });
-  }
+      // Cancel editing
+      this.editingContact = null;
+      this.originalContact = null;
+    }
 
-  // Create observables for individual contact lock events
-  onContactLocked(): Observable<string> {
-    return new Observable(observer => {
-      this.socketService.lockedContacts$.subscribe(lockedContacts => {
-        lockedContacts.forEach(contactId => {
-          if (!this.lockedContacts.has(contactId)) {
-            observer.next(contactId);
-          }
-        });
-      });
-    });
-  }
-
-  onContactUnlocked(): Observable<string> {
-    return new Observable(observer => {
-      this.socketService.lockedContacts$.subscribe(lockedContacts => {
-        this.lockedContacts.forEach(contactId => {
-          if (!lockedContacts.includes(contactId)) {
-            observer.next(contactId);
-          }
-        });
-      });
-    });
+    // Remove contact from local list
+    this.contacts = this.contacts.filter(contact => contact._id !== contactId);
+    
+    // Update totals
+    this.totalContacts = Math.max(0, this.totalContacts - 1);
+    this.totalPages = Math.ceil(this.totalContacts / this.pageSize);
+    
+    // Remove from locked contacts if it was locked
+    if (this.lockedContacts.has(contactId)) {
+      this.lockedContacts.delete(contactId);
+    }
   }
 
   // Navigation Methods
   navigateToAddContact() {
-    this.router.navigate(['/contacts/add']);
+    this.router.navigate(['/add-contact']);
   }
 
   logout() {

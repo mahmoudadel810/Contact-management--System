@@ -1,189 +1,295 @@
 <div class="contact-list-container">
-  <!-- Modern Header with Gradient Background -->
-  <mat-toolbar class="header-toolbar">
-    <mat-toolbar-row>
-      <h1>Contact Manager</h1>
-      <span class="spacer"></span>
-      <div class="header-buttons">
-        <button mat-raised-button class="add-contact-btn" (click)="navigateToAddContact()">
-          <mat-icon>add</mat-icon>
-          Add Contact
-        </button>
-        <button mat-stroked-button class="logout-btn" (click)="logout()">
-          <mat-icon>logout</mat-icon>
-          Logout
-        </button>
+  <!-- Header with Gradient Background -->
+  <div class="header-section">
+    <div class="container-fluid py-4">
+      <div class="row align-items-center">
+        <div class="col">
+          <h1 class="page-title">
+            <i class="bi bi-people-fill me-2"></i>
+            Contact Manager
+          </h1>
+          <p class="page-subtitle mb-0">Manage your contacts efficiently</p>
+        </div>
+        <div class="col-auto">
+          <div class="header-buttons">
+            <button class="btn btn-light add-contact-btn me-2" (click)="navigateToAddContact()">
+              <i class="bi bi-person-plus me-2"></i>
+              Add Contact
+            </button>
+            <button class="btn btn-outline-light logout-btn" (click)="logout()">
+              <i class="bi bi-box-arrow-right me-2"></i>
+              Logout
+            </button>
+          </div>
+        </div>
       </div>
-    </mat-toolbar-row>
-  </mat-toolbar>
-
-  <!-- Enhanced Search Field -->
-  <div class="search-container">
-    <mat-form-field class="search-field" appearance="outline">
-      <mat-label>Search contacts...</mat-label>
-      <input matInput 
-             [(ngModel)]="searchTerm" 
-             (input)="onSearch()" 
-             placeholder="Search by name, phone, or address">
-      <mat-icon matSuffix>search</mat-icon>
-    </mat-form-field>
-  </div>
-
-  <!-- Statistics Cards -->
-  <div class="stats-container">
-    <div class="stat-card">
-      <span class="stat-number">{{ totalContacts }}</span>
-      <span class="stat-label">Total Contacts</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-number">{{ filteredContacts.length }}</span>
-      <span class="stat-label">Filtered Results</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-number">{{ currentPage + 1 }}</span>
-      <span class="stat-label">Current Page</span>
     </div>
   </div>
 
-  <!-- Loading State -->
-  <div *ngIf="loading" class="loading-container">
-    <mat-spinner diameter="60"></mat-spinner>
-    <div class="loading-text">Loading your contacts...</div>
-  </div>
+  <!-- Content Container -->
+  <div class="container-fluid content-container">
+    
+    <!-- Search and Stats Section -->
+    <div class="row">
+      <!-- Search Field -->
+      <div class="col-lg-6 col-md-8 mx-auto mb-4">
+        <div class="search-card">
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="bi bi-search"></i>
+            </span>
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="Search contacts by name, phone, or address..."
+              [(ngModel)]="searchTerm" 
+              (input)="onSearch()">
+            <button *ngIf="searchTerm" 
+                    class="btn btn-outline-secondary" 
+                    type="button" 
+                    (click)="searchTerm = ''; onSearch()">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <!-- Enhanced Contact Table -->
-  <div *ngIf="!loading" class="table-container">
-    <table mat-table [dataSource]="dataSource" class="contacts-table">
-      
-      <!-- Name Column with Avatar -->
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Contact</th>
-        <td mat-cell *matCellDef="let contact" [class.editing-row]="contact.isEditing" [class.locked-row]="contact.isLocked">
-          <div class="contact-name">
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+      <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="bi bi-people"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">{{ totalContacts }}</h3>
+            <p class="stat-label">Total Contacts</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-primary">
+            <i class="bi bi-funnel"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">{{ contacts.length }}</h3>
+            <p class="stat-label">Filtered Results</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-success">
+            <i class="bi bi-file-earmark-text"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">{{ currentPage + 1 }}</h3>
+            <p class="stat-label">Current Page</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-warning">
+            <i class="bi bi-lock"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">{{ lockedContacts.size }}</h3>
+            <p class="stat-label">Locked Contacts</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-container">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div class="loading-text mt-3">Loading your contacts...</div>
+    </div>
+
+    <!-- Contact Cards -->
+    <div *ngIf="!loading && contacts.length > 0" class="row">
+      <div *ngFor="let contact of contacts" class="col-lg-4 col-md-6 mb-4">
+        <div class="contact-card" 
+             [ngClass]="{
+               'editing-card': contact.isEditing,
+               'locked-card': contact.isLocked && !contact.isEditing
+             }">
+          
+          <!-- Contact Header -->
+          <div class="contact-header">
             <div class="contact-avatar">
               {{ getInitials(contact.name) }}
             </div>
-            <div *ngIf="!contact.isEditing">{{ contact.name }}</div>
-            <mat-form-field *ngIf="contact.isEditing" class="edit-field" appearance="outline">
-              <input matInput [(ngModel)]="contact.name" placeholder="Contact name">
-            </mat-form-field>
-            <div class="status-indicator" *ngIf="contact.isLocked && !contact.isEditing">
-              <mat-icon class="locked-icon">lock</mat-icon>
-              <small>Locked by another user</small>
+            <div class="contact-info">
+              <div *ngIf="!contact.isEditing" class="contact-name">{{ contact.name }}</div>
+              <input *ngIf="contact.isEditing" 
+                     type="text" 
+                     class="form-control form-control-sm" 
+                     [(ngModel)]="contact.name" 
+                     placeholder="Contact name">
+              
+              <div *ngIf="contact.isLocked && !contact.isEditing" class="locked-indicator">
+                <i class="bi bi-lock-fill me-1"></i>
+                <small>Locked by another user</small>
+              </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="contact-actions">
+              <!-- Edit/Save/Cancel buttons -->
+              <button *ngIf="!contact.isEditing && !contact.isLocked" 
+                      class="btn btn-sm btn-outline-primary"
+                      (click)="startEditing(contact)"
+                      title="Edit contact">
+                <i class="bi bi-pencil"></i>
+              </button>
+              
+              <button *ngIf="contact.isEditing" 
+                      class="btn btn-sm btn-success me-1"
+                      (click)="saveEdit(contact)"
+                      title="Save changes">
+                <i class="bi bi-check"></i>
+              </button>
+              
+              <button *ngIf="contact.isEditing" 
+                      class="btn btn-sm btn-secondary"
+                      (click)="cancelEdit(contact)"
+                      title="Cancel editing">
+                <i class="bi bi-x"></i>
+              </button>
+              
+              <!-- Delete button -->
+              <button *ngIf="!contact.isEditing" 
+                      class="btn btn-sm btn-outline-danger ms-1"
+                      (click)="deleteContact(contact._id!)"
+                      title="Delete contact">
+                <i class="bi bi-trash"></i>
+              </button>
             </div>
           </div>
-        </td>
-      </ng-container>
 
-      <!-- Phone Column -->
-      <ng-container matColumnDef="phone">
-        <th mat-header-cell *matHeaderCellDef>Phone</th>
-        <td mat-cell *matCellDef="let contact">
-          <div *ngIf="!contact.isEditing" class="contact-phone">{{ contact.phone }}</div>
-          <mat-form-field *ngIf="contact.isEditing" class="edit-field" appearance="outline">
-            <input matInput [(ngModel)]="contact.phone" placeholder="Phone number">
-          </mat-form-field>
-        </td>
-      </ng-container>
+          <!-- Contact Details -->
+          <div class="contact-body">
+            <!-- Phone -->
+            <div class="contact-field">
+              <label class="field-label">
+                <i class="bi bi-telephone me-2"></i>Phone
+              </label>
+              <div *ngIf="!contact.isEditing" class="field-value phone-value">{{ contact.phone }}</div>
+              <input *ngIf="contact.isEditing" 
+                     type="text" 
+                     class="form-control form-control-sm" 
+                     [(ngModel)]="contact.phone" 
+                     placeholder="Phone number"
+                     maxlength="11">
+            </div>
 
-      <!-- Address Column -->
-      <ng-container matColumnDef="address">
-        <th mat-header-cell *matHeaderCellDef>Address</th>
-        <td mat-cell *matCellDef="let contact">
-          <div *ngIf="!contact.isEditing" class="contact-address" [title]="contact.address">
-            {{ contact.address }}
+            <!-- Address -->
+            <div class="contact-field">
+              <label class="field-label">
+                <i class="bi bi-geo-alt me-2"></i>Address
+              </label>
+              <div *ngIf="!contact.isEditing" class="field-value" [title]="contact.address">{{ contact.address }}</div>
+              <input *ngIf="contact.isEditing" 
+                     type="text" 
+                     class="form-control form-control-sm" 
+                     [(ngModel)]="contact.address" 
+                     placeholder="Address">
+            </div>
+
+            <!-- Notes -->
+            <div class="contact-field">
+              <label class="field-label">
+                <i class="bi bi-journal-text me-2"></i>Notes
+              </label>
+              <div *ngIf="!contact.isEditing" class="field-value notes-value">
+                {{ contact.notes || 'No notes' }}
+              </div>
+              <textarea *ngIf="contact.isEditing" 
+                       class="form-control form-control-sm" 
+                       [(ngModel)]="contact.notes" 
+                       placeholder="Notes" 
+                       rows="2"
+                       maxlength="200">
+              </textarea>
+            </div>
           </div>
-          <mat-form-field *ngIf="contact.isEditing" class="edit-field" appearance="outline">
-            <input matInput [(ngModel)]="contact.address" placeholder="Address">
-          </mat-form-field>
-        </td>
-      </ng-container>
+        </div>
+      </div>
+    </div>
 
-      <!-- Notes Column -->
-      <ng-container matColumnDef="notes">
-        <th mat-header-cell *matHeaderCellDef>Notes</th>
-        <td mat-cell *matCellDef="let contact">
-          <div *ngIf="!contact.isEditing" class="contact-notes" [title]="contact.notes">
-            {{ contact.notes || 'No notes' }}
-          </div>
-          <mat-form-field *ngIf="contact.isEditing" class="edit-field" appearance="outline">
-            <textarea matInput [(ngModel)]="contact.notes" placeholder="Notes" rows="2"></textarea>
-          </mat-form-field>
-        </td>
-      </ng-container>
-
-      <!-- Enhanced Actions Column -->
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Actions</th>
-        <td mat-cell *matCellDef="let contact">
-          <div class="action-buttons">
-            <!-- Edit/Save/Cancel buttons -->
-            <button *ngIf="!contact.isEditing && !contact.isLocked" 
-                    mat-icon-button 
-                    color="primary"
-                    (click)="startEditing(contact)"
-                    matTooltip="Edit contact">
-              <mat-icon>edit</mat-icon>
-            </button>
-            
-            <button *ngIf="contact.isEditing" 
-                    mat-icon-button 
-                    color="accent"
-                    (click)="saveEdit(contact)"
-                    matTooltip="Save changes">
-              <mat-icon>save</mat-icon>
-            </button>
-            
-            <button *ngIf="contact.isEditing" 
-                    mat-icon-button 
-                    (click)="cancelEdit(contact)"
-                    matTooltip="Cancel editing">
-              <mat-icon>cancel</mat-icon>
-            </button>
-            
-            <!-- Delete button -->
-            <button *ngIf="!contact.isEditing" 
-                    mat-icon-button 
-                    color="warn"
-                    (click)="deleteContact(contact._id)"
-                    matTooltip="Delete contact">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-    </table>
-
-    <!-- Enhanced No Data State -->
-    <div *ngIf="dataSource.data.length === 0" class="no-data">
-      <div class="no-data-icon">📞</div>
-      <h3>No Contacts Found</h3>
-      <p>
-        <span *ngIf="searchTerm">
-          No contacts match your search criteria. Try adjusting your search terms.
-        </span>
-        <span *ngIf="!searchTerm">
+    <!-- No Data State -->
+    <div *ngIf="!loading && contacts.length === 0" class="no-data-container">
+      <div class="no-data-content">
+        <div class="no-data-icon">
+          <i class="bi bi-people"></i>
+        </div>
+        <h3>No Contacts Found</h3>
+        <p *ngIf="searchTerm" class="mb-3">
+          No contacts match your search criteria "<strong>{{ searchTerm }}</strong>". 
+          <br>Try adjusting your search terms or clear the search to see all contacts.
+        </p>
+        <p *ngIf="!searchTerm" class="mb-3">
           You haven't added any contacts yet. Start building your contact list by adding your first contact.
-        </span>
-      </p>
-      <button mat-raised-button (click)="navigateToAddContact()">
-        <mat-icon>add</mat-icon>
-        Add Your First Contact
-      </button>
+        </p>
+        <button class="btn btn-primary" (click)="navigateToAddContact()">
+          <i class="bi bi-person-plus me-2"></i>
+          Add Your First Contact
+        </button>
+        <button *ngIf="searchTerm" 
+                class="btn btn-outline-secondary ms-2" 
+                (click)="searchTerm = ''; onSearch()">
+          <i class="bi bi-arrow-clockwise me-2"></i>
+          Clear Search
+        </button>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="!loading && contacts.length > 0 && totalPages > 1" class="pagination-container">
+      <nav aria-label="Contact pagination">
+        <ul class="pagination justify-content-center">
+          <!-- Previous Button -->
+          <li class="page-item" [class.disabled]="currentPage === 0">
+            <button class="page-link" 
+                    [disabled]="currentPage === 0"
+                    (click)="onPageChange(currentPage - 1)">
+              <i class="bi bi-chevron-left"></i>
+              Previous
+            </button>
+          </li>
+
+          <!-- Page Numbers -->
+          <li *ngFor="let page of getPageNumbers()" 
+              class="page-item" 
+              [class.active]="page === currentPage">
+            <button class="page-link" (click)="onPageChange(page)">
+              {{ page + 1 }}
+            </button>
+          </li>
+
+          <!-- Next Button -->
+          <li class="page-item" [class.disabled]="currentPage >= totalPages - 1">
+            <button class="page-link" 
+                    [disabled]="currentPage >= totalPages - 1"
+                    (click)="onPageChange(currentPage + 1)">
+              Next
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Page Info -->
+      <div class="page-info text-center">
+        Showing {{ (currentPage * pageSize) + 1 }} to {{ getEndContactNumber() }} 
+        of {{ totalContacts }} contacts
+      </div>
     </div>
   </div>
-
-  <!-- Enhanced Paginator -->
-  <mat-paginator 
-    *ngIf="!loading && dataSource.data.length > 0"
-    [length]="totalContacts"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="[5, 10, 20]"
-    [pageIndex]="currentPage"
-    (page)="onPageChange($event)"
-    showFirstLastButtons>
-  </mat-paginator>
 </div>
