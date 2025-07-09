@@ -1,0 +1,47 @@
+version: '3.8'
+services:
+  # MongoDB Service
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  # Backend Server Service
+  server:
+    build: ./Server
+    container_name: contact-manager-server
+    ports:
+      - "8000:8000"
+    environment:
+      MONGO_URI: "mongodb+srv://Saknly:Saknly@cluster0.dkmvwlm.mongodb.net/Contact-Managment"
+      PORT: 8000
+      SIGNATURE: "generation"
+      TOKEN_PREFIX: "Contact__ "
+    depends_on:
+      - mongo
+
+  # Frontend Client Service
+  client:
+    build: ./Client/contact-manager-client
+    container_name: contact-manager-client
+    ports:
+      - "4200:80"
+    depends_on:
+      - server
+
+volumes:
+  mongo-data:
+
+  
+  
+  ## 1- build the root  : docker-compose up --build
+
+  ## 2 - build the server : docker build -t contact-manager-server .
+  ## 3- build the client : docker build -t contact-manager-client .
+
+  ##4- create a docker network : docker network create contact-network
+
+  ##5 run the mongodb container : docker run -d --name mongo --network contact-network -v mongo-data:/data/db mongo
