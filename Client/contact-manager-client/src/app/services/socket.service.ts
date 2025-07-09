@@ -16,19 +16,29 @@ export class SocketService {
 
   connect(): void {
     const token = this.authService.getToken();
-    if (!token) return;
+    if (!token) {
+      console.error('No token available for socket connection');
+      return;
+    }
 
-    this.socket = io(environment.apiUrl.replace('/api/v1', ''), {
+    const socketUrl = environment.apiUrl.replace('/api/v1', '');
+    const fullToken = `${environment.tokenPrefix}${token}`;
+
+    this.socket = io(socketUrl, {
       auth: {
-        token: token
+        token: fullToken
       }
     });
 
-    this.socket.on('connect', () => {
-      console.log('Connected to server');
+    this.socket.on('connect_error', (error: any) => {
+      console.error('Socket connection error:', error);
     });
 
-    this.socket.on('contact_locked', (data: { contactId: string, userId: string }) => {
+    this.socket.on('error', (error: any) => {
+      console.error('Socket error:', error);
+    });
+
+    this.socket.on('contact_locked', (data: { contactId: string, userId?: string, lockedBy?: any }) => {
       const currentLocked = this.lockedContactsSubject.value;
       if (!currentLocked.includes(data.contactId)) {
         this.lockedContactsSubject.next([...currentLocked, data.contactId]);
@@ -40,8 +50,9 @@ export class SocketService {
       this.lockedContactsSubject.next(currentLocked.filter(id => id !== data.contactId));
     });
 
-    this.socket.on('disconnect', () => {
-      console.log('Disconnected from server');
+    this.socket.on('contact_deleted', (data: { contactId: string, deletedBy: any }) => {
+      // Emit a custom event that components can listen to
+      window.dispatchEvent(new CustomEvent('contactDeleted', { detail: data }));
     });
   }
 

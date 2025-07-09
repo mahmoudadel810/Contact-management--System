@@ -36,6 +36,9 @@ export const initApp = () => {
 
    // Initialize Socket 
    const io = initializeSocket(server); //dont forget to return
+   
+   // Make Socket.io instance available to controllers
+   app.locals.io = io;
 
    // check server
    app.get('/', (req, res) => {

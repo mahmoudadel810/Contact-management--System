@@ -28,13 +28,13 @@ export class AuthService {
       .pipe(
         tap(response => {
           if (response.success && response.token) {
+            // Store token
             localStorage.setItem('token', response.token);
-            // Create a simple user object from the credentials since backend doesn't return user info
+            // Create a user object 
             const user: User = {
               userName: credentials.userName,
-              password: '', // Don't store password
-              role: credentials.userName === 'user1' ? 'admin' : 'user',
-              contacts: []
+              password: credentials.password,
+              role: credentials.userName === 'user1' ? 'admin' : 'user'
             };
             localStorage.setItem('user', JSON.stringify(user));
             this.currentUserSubject.next(user);

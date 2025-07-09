@@ -126,15 +126,16 @@ export const updateContact = async (req, res, next) => {
       const contactId = req.params.id;
       const updates = req.body;
 
-      // Check if contact is locked by another user
+      // Check if contact exists and get its current state
       const contact = await contactModel.findById(contactId);
       if (!contact) {
          return res.status(404).json({
             success: false,
-            message: "Contact not found"
+            message: "Contact not found. It may have been deleted while you were editing."
          });
       }
 
+      // Check if contact is locked by another user
       if (contact.isEditing && contact.user.toString() !== req.user._id.toString()) {
          return res.status(423).json({
             success: false,
@@ -147,6 +148,14 @@ export const updateContact = async (req, res, next) => {
          { ...updates, isEditing: false },
          { new: true, runValidators: true }
       ).populate('user', 'userName role');
+
+      // Double-check that update was successful
+      if (!updatedContact) {
+         return res.status(404).json({
+            success: false,
+            message: "Contact was deleted while you were editing. Your changes could not be saved."
+         });
+      }
 
       res.status(200).json({
          success: true,
@@ -165,19 +174,44 @@ export const deleteContact = async (req, res, next) => {
    try {
       const contactId = req.params.id;
 
-      const deletedContact = await contactModel.findByIdAndDelete(contactId);
+      // First find the contact to check if it's locked
+      const contact = await contactModel.findById(contactId);
 
-      if (!deletedContact) {
+      if (!contact) {
          return res.status(404).json({
             success: false,
             message: "Contact not found"
          });
       }
 
-      // Remove contact 
+      // CRITICAL: Prevent deletion of locked contacts
+      if (contact.isEditing) {
+         return res.status(423).json({
+            success: false,
+            message: "Cannot delete contact: Contact is currently being edited by another user. Please wait for the editing session to finish."
+         });
+      }
+
+      // Proceed with deletion
+      const deletedContact = await contactModel.findByIdAndDelete(contactId);
+
+      // Remove contact from user's contacts array
       await userModel.findByIdAndUpdate(deletedContact.user, {
          $pull: { contacts: contactId }
       });
+
+      // Notify all connected users about the deletion via Socket.io
+      // We'll import the socket instance if available
+      if (req.app && req.app.locals.io) {
+         req.app.locals.io.emit('contact_deleted', {
+            contactId,
+            deletedBy: {
+               id: req.user._id,
+               userName: req.user.userName
+            },
+            timestamp: new Date()
+         });
+      }
 
       res.status(200).json({
          success: true,

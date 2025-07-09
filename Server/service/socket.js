@@ -8,10 +8,17 @@ import contactModel from "../DB/models/contactModel.js";
 
 const socketAuth = async (socket, next) => {
    try {
-      const token = socket.handshake.auth.token;
+      const fullToken = socket.handshake.auth.token;
+      
+      if (!fullToken) {
+         return next(new Error("Authentication error: No token provided"));
+      }
+
+      // Extract JWT token from prefixed token (like HTTP auth middleware)
+      const token = fullToken.split(process.env.TOKEN_PREFIX || 'Contact__')[1];
       
       if (!token) {
-         return next(new Error("Authentication error: No token provided"));
+         return next(new Error("Authentication error: Invalid token format"));
       }
 
       const decoded = jwt.verify(token, process.env.SIGNATURE);
@@ -24,6 +31,7 @@ const socketAuth = async (socket, next) => {
       socket.user = user;
       next();
    } catch (error) {
+      console.error('Socket authentication error:', error);
       next(new Error("Authentication error: Invalid token"));
    }
 };
